@@ -33,7 +33,7 @@ from common.quaternion import (
 # # Lower legs
 # l_idx1, l_idx2 = 5, 8
 # Right/Left foot
-fid_r, fid_l = 8, 7
+fid_r, fid_l = [8, 11], [7, 10]
 # # Face direction index: r_hip, l_hip, sdr_r, sdr_l
 face_joint_indx = [2, 1, 17, 16]
 # # l_hip, r_hip
@@ -98,18 +98,19 @@ def fk_smpl22_positions(trans, poses_axis_angle):
     return positions
 
 def foot_detect(positions, thres):
-    """
-    单点接触检测：每只脚只用一个关节的速度判定。
-    """
-    th2 = thres ** 2
-    v_l = positions[1:, fid_l, :] - positions[:-1, fid_l, :]
-    v_r = positions[1:, fid_r, :] - positions[:-1, fid_r, :]
+    velfactor, heightfactor = np.array([thres, thres]), np.array([3.0, 2.0])
 
-    v2_l = np.sum(v_l ** 2, axis=-1, keepdims=True)  # (T-1,1)
-    v2_r = np.sum(v_r ** 2, axis=-1, keepdims=True)  # (T-1,1)
+    feet_l_x = (positions[1:, fid_l, 0] - positions[:-1, fid_l, 0]) ** 2
+    feet_l_y = (positions[1:, fid_l, 1] - positions[:-1, fid_l, 1]) ** 2
+    feet_l_z = (positions[1:, fid_l, 2] - positions[:-1, fid_l, 2]) ** 2
 
-    feet_l = (v2_l < th2).astype(np.float32)
-    feet_r = (v2_r < th2).astype(np.float32)
+    feet_l = ((feet_l_x + feet_l_y + feet_l_z) < velfactor).astype(np.float32)
+
+    feet_r_x = (positions[1:, fid_r, 0] - positions[:-1, fid_r, 0]) ** 2
+    feet_r_y = (positions[1:, fid_r, 1] - positions[:-1, fid_r, 1]) ** 2
+    feet_r_z = (positions[1:, fid_r, 2] - positions[:-1, fid_r, 2]) ** 2
+
+    feet_r = (((feet_r_x + feet_r_y + feet_r_z) < velfactor)).astype(np.float32)
 
     return feet_l, feet_r
 
@@ -153,7 +154,7 @@ def inverse_kinematics_np(positions, face_joint_indx, smooth_forward=False):
 
             bone_dir = positions[t, j] - positions[t, parent]  # (3,)
             bone_dir_local = qrot_np(parent_quat_inv[None, :], bone_dir[None, :])[0]
-            offset = offsets[j].numpy()
+            offset = offsets[j]
             offset_norm = np.linalg.norm(offset)
             if offset_norm < 1e-8:
                 quat_rel = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
@@ -176,7 +177,7 @@ def get_cont6d_params(positions):
     # skel = Skeleton(n_raw_offsets, kinematic_chain, "cpu")
     # (T, J, 4)
     # quat_params = skel.inverse_kinematics_np(positions, face_joint_indx, smooth_forward=True)
-    quat_params = inverse_kinematics_np(positions)
+    quat_params = inverse_kinematics_np(positions, face_joint_indx, smooth_forward=True)
     # 修正四元数
     quat_params = qfix(quat_params)
 
@@ -286,11 +287,10 @@ if __name__ == "__main__":
 
     #单文件
     # # 输入：由 BVH 转来的 SMPL npz（键：trans, poses）
-    # smpl_npz = r"D:\fsy\project\kdae\F01A1V1.npz"
+    # smpl_npz = r"f:\fsy\project\kae_process\kae_smpl\F01A1V1.npz"
     # # 输出目录：data（HumanML3D/new_joint_vecs 风格）和可选 joints
-    # out_vec_dir = "./kdaee/new_joint_vecs/"
-    # out_joints_dir = "./kdaee/new_joints/"
-
+    # out_vec_dir = r"f:\fsy\project\kae_process\kae_data"
+    # out_joints_dir = r"f:\fsy\project\kae_process\kae_joints"
     # smplnpz_to_data(smpl_npz, out_vec_dir, out_joints_dir, feet_thre=0.002)
 
     #批量处理文件夹

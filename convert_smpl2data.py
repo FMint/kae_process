@@ -277,6 +277,7 @@ def smplnpz_to_data(npz_path, out_vec_dir, out_joints_dir=None, feet_thre=0.002)
         # 可选：保存用 recover_from_ric 可重建的 joints（用于自检）
         # 这里直接保存 positions（对齐后）
         out_joints_path = os.path.join(out_joints_dir, base + ".npy")
+        positions = positions[:-1,...]
         np.save(out_joints_path, positions.astype(np.float32))
 
     print(f"[OK] {base}: data {data.shape}, positions {positions.shape}")

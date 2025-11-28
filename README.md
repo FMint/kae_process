@@ -25,6 +25,6 @@ python cal_mean_variance.py
 
 `divide_data.ipynb`
 
-## generate text annotations
+## generate text annotations and text word segmentation
 
-## text word segmentation
+`process_text.ipynb`

@@ -1,6 +1,11 @@
 # kae_process
 process kae dataset, including screening valid actions and converting to the target format.
 
+## prepare bvh data
+extract excel & split bvh by frames tag
+
+`process_bvh_by_excel.ipunb`
+
 ## bvh-smpl-data&joints
 
 bvh-smpl: `convert_bvh2smpl.py`

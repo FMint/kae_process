@@ -37,10 +37,10 @@ python cal_mean_variance.py
 ## Data Structure
 ```sh
 <DATA-DIR>
-./animations.rar        //Animations of all motion clips in mp4 format.
-./new_joint_vecs.rar    //Extracted rotation invariant feature and rotation features vectors from 3d motion positions.
-./new_joints.rar        //3d motion positions.
-./texts.rar             //Descriptions of motion data.
+./animations            //Animations of all motion clips in mp4 format.
+./new_joint_vecs        //(T, 263)  //Extracted rotation invariant feature and rotation features vectors from 3d motion positions.
+./new_joints            //(T, 22, 3)    //3d motion positions.
+./texts                 //Descriptions of motion data.
 ./Mean.npy              //Mean for all data in new_joint_vecs
 ./Std.npy               //Standard deviation for all data in new_joint_vecs
 ./all.txt               //List of names of all data

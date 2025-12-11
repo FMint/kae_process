@@ -4,6 +4,7 @@ import numpy as np
 
 # kae_pos=r"F:\fsy\project\HumanML3D\joints\000001.npy"
 kae_pos=r"F:\fsy\project\kae_process\kae_pos3d\F01A1V1.npy"
+# kae_pos=r"F:\fsy\project\HumanML3D\kae\new_joints\F01A1V1.npy"
 # kae_pos=r"F:\fsy\project\HumanML3D\HumanML3D\new_joints\000000.npy"
 data_kae_pos=np.load(kae_pos)
 print("kae pos shape:", data_kae_pos.shape)
@@ -25,5 +26,23 @@ ax.set_xlabel('x')
 ax.set_ylabel('y')
 ax.set_zlabel('z')
 ax.set_title(f'frame {frame_id} 3D view')
-ax.view_init(elev=15, azim=-60)  # 调整观察角度
+
+# === 让坐标系等距 ===
+x = pts[:, 0]
+y = pts[:, 1]
+z = pts[:, 2]
+
+max_range = np.array([x.max()-x.min(),
+                      y.max()-y.min(),
+                      z.max()-z.min()]).max() / 2.0
+
+mid_x = (x.max()+x.min()) * 0.5
+mid_y = (y.max()+y.min()) * 0.5
+mid_z = (z.max()+z.min()) * 0.5
+
+ax.set_xlim(mid_x - max_range, mid_x + max_range)
+ax.set_ylim(mid_y - max_range, mid_y + max_range)
+ax.set_zlim(mid_z - max_range, mid_z + max_range)
+
+ax.view_init(elev=15, azim=-60,vertical_axis="y")  # 调整观察角度
 plt.show()

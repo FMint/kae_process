@@ -14,11 +14,17 @@ bvh-smpl: `convert_bvh2smpl.py`
 python convert_bvh2smpl.py
 ```
 
-smpl-data: `convert_smpl2data.py`
+smpl-3d_pos: `convert_smpl2data.py`
+
+get joints global positions in out_pos_dir
 
 ```sh
 python convert_smpl2data.py
 ```
+
+3d_pos-data: `motion_representation.ipynb`
+
+reuse humanml3d data process method
 
 ## calculate mean&variance
 

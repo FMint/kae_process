@@ -33,6 +33,7 @@ from common.quaternion import (
 # # Lower legs
 # l_idx1, l_idx2 = 5, 8
 # Right/Left foot
+# fid_r, fid_l = 8, 7
 fid_r, fid_l = [8, 11], [7, 10]
 # # Face direction index: r_hip, l_hip, sdr_r, sdr_l
 face_joint_indx = [2, 1, 17, 16]
@@ -192,13 +193,15 @@ def get_cont6d_params(positions):
 
     return cont_6d_params, r_velocity, velocity, r_rot
 
-def smplnpz_to_data(npz_path, out_vec_dir, out_joints_dir=None, feet_thre=0.002):
+def smplnpz_to_data(npz_path, out_vec_dir, out_joints_dir=None, out_pos_dir=None, feet_thre=0.002):
     """
     从 SMPL npz(trans, poses) 生成 HumanML3D data 并保存 .npy
     """
     os.makedirs(out_vec_dir, exist_ok=True)
     if out_joints_dir is not None:
         os.makedirs(out_joints_dir, exist_ok=True)
+    if out_pos_dir is not None:
+        os.makedirs(out_pos_dir, exist_ok=True)
 
     npz = np.load(npz_path)
     trans = npz["trans"].astype(np.float32)           # (T,3)
@@ -209,6 +212,13 @@ def smplnpz_to_data(npz_path, out_vec_dir, out_joints_dir=None, feet_thre=0.002)
 
     # 1) FK 得到原始全局关节位置
     positions = fk_smpl22_positions(trans, poses)     # (T,22,3)
+    pos_3d_old= positions.copy()
+    x_o = pos_3d_old[..., 0]
+    y_o = pos_3d_old[..., 1]
+    z_o = pos_3d_old[..., 2]
+    pos_3d = np.stack([y_o, z_o, x_o], axis=-1)       # (T,22,3) 交换轴到 y-up
+    pad_width = (0, 0), (0, 2), (0, 0)  # 在关节维度后面补两个零
+    pos_3d = np.pad(pos_3d, pad_width, mode='constant', constant_values=0)
 
     # 2) 放到地面
     floor_height = positions.min(axis=0).min(axis=0)[1]
@@ -273,6 +283,9 @@ def smplnpz_to_data(npz_path, out_vec_dir, out_joints_dir=None, feet_thre=0.002)
     out_vec_path = os.path.join(out_vec_dir, base + ".npy")
     np.save(out_vec_path, data)
 
+    global_pos_path = os.path.join(out_pos_dir, base + ".npy")
+    np.save(global_pos_path, pos_3d.astype(np.float32))
+
     if out_joints_dir is not None:
         # 可选：保存用 recover_from_ric 可重建的 joints（用于自检）
         # 这里直接保存 positions（对齐后）
@@ -292,12 +305,15 @@ if __name__ == "__main__":
     # # 输出目录：data（HumanML3D/new_joint_vecs 风格）和可选 joints
     # out_vec_dir = r"f:\fsy\project\kae_process\kae_data"
     # out_joints_dir = r"f:\fsy\project\kae_process\kae_joints"
-    # smplnpz_to_data(smpl_npz, out_vec_dir, out_joints_dir, feet_thre=0.002)
+    # out_pos_dir = r"f:\fsy\project\kae_process\kae_pos3d"
+    # smplnpz_to_data(smpl_npz, out_vec_dir, out_joints_dir, out_pos_dir, feet_thre=0.002)
 
     #批量处理文件夹
-    smpl_dir = r"f:\fsy\project\kae_process\kae_smpl"
-    data_dir = r"f:\fsy\project\kae_process\kae_data"
-    joint_dir= r"f:\fsy\project\kae_process\kae_joints"
+    smpl_dir = r"F:\fsy\project\kae_process\kae_smpl\happy"
+    data_dir = r"f:\fsy\project\kae_process\kae_data\happy"
+    # joint_dir= r"f:\fsy\project\kae_process\kae_joints\happy"
+    joint_dir= None
+    out_pos_dir = r"f:\fsy\project\kae_process\kae_pos3d\happy"
     smpl_files = [os.path.join(smpl_dir, f) for f in os.listdir(smpl_dir) if f.endswith(".npz")]
     for smpl_npz in smpl_files:
-        smplnpz_to_data(smpl_npz, data_dir, joint_dir, feet_thre=0.002)
+        smplnpz_to_data(smpl_npz, data_dir, joint_dir, out_pos_dir, feet_thre=0.002)
